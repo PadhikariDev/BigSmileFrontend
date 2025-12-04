@@ -11,16 +11,32 @@ const Login = () => {
     const navigate = useNavigate();
     const [showPopup, setshowPopup] = useState(false);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        if (username === 'admin' && password === 'admin123') {
-            navigate("/dashboard/home");
-        } else {
+
+        try {
+            const res = await fetch("http://localhost:5000/admin/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ username, password }),
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                navigate("/dashboard/home");
+            } else {
+                setshowPopup(true);
+            }
+        } catch (error) {
+            console.error("Login error:", error);
             setshowPopup(true);
-            setUsername("");
-            setPassword("");
         }
-    }
+
+        setUsername("");
+        setPassword("");
+    };
+
     return (
         <div
             className="h-screen w-screen flex justify-center items-center font-sans relative"
