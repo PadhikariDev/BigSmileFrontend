@@ -4,33 +4,40 @@ import bigS from '../assets/big_smile.jpg'
 import logo from '../assets/bsLogo.png'
 import loginImg from '../assets/loginPage.jpg'
 import Popup from '../components/Popup'
+import axios from "axios";
+import { BeatLoader } from "react-spinners";
+
 
 const Login = () => {
+    const [isLoading, setIsLoading] = useState(false);
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const navigate = useNavigate();
-    const [showPopup, setshowPopup] = useState(false);
+    const [showPopup, setShowPopup] = useState(false);
+    const API = import.meta.env.VITE_BACKEND_URL;
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setIsLoading(true);
 
         try {
-            const res = await fetch("http://localhost:5000/admin/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ username, password }),
+            const res = await axios.post(`${API}/admin/login`, {
+                username,
+                password,
             });
 
-            const data = await res.json();
-
-            if (data.success) {
+            if (res.data.success) {
+                localStorage.setItem("token", res.data.token);
                 navigate("/dashboard/home");
             } else {
-                setshowPopup(true);
+                setShowPopup(true);
             }
         } catch (error) {
-            console.error("Login error:", error);
-            setshowPopup(true);
+            console.error("Login error:", error.response?.data || error);
+            setShowPopup(true);
+        } finally {
+            setIsLoading(false); // stop loading
         }
 
         setUsername("");
@@ -87,18 +94,19 @@ const Login = () => {
                         />
                         <button
                             type="submit"
+                            disabled={isLoading} // disable while loading
                             className="w-1/2 mx-auto py-3 px-10 text-lg font-medium text-[#fff8f0]
-                             rounded-lg shadow-md 
-                            bg-gradient-to-r from-[#FF8008] via-[#FFC837] to-[#FF8008] 
-                             bg-[length:200%_auto] bg-left transition-all duration-500 ease-in-out hover:bg-right cursor-pointer"
+             rounded-lg shadow-md 
+            bg-gradient-to-r from-[#FF8008] via-[#FFC837] to-[#FF8008] 
+             bg-[length:200%_auto] bg-left transition-all duration-500 ease-in-out hover:bg-right cursor-pointer flex items-center justify-center gap-2"
                         >
-                            Login
+                            {isLoading ? <BeatLoader size={10} color="#fff" /> : "Login"}
                         </button>
                     </form>
                 </div>
             </div>
             {showPopup && (
-                <Popup message="Incorrect username or password." onClose={() => setshowPopup(false)} />
+                <Popup message="Incorrect username or password." onClose={() => setShowPopup(false)} />
             )}
         </div>
     )

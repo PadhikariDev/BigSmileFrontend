@@ -5,6 +5,7 @@ import Team from "./pages/dashboard/Team";
 import Home from "./pages/dashboard/Home";
 import Patients from "./pages/dashboard/Patients";
 import Settings from "./pages/dashboard/Settings";
+import PrivateRoute from "./components/PrivateRoute"; // Make sure to create this
 
 function App() {
   return (
@@ -13,8 +14,15 @@ function App() {
         {/* Public Route */}
         <Route path="/" element={<Login />} />
 
-        {/* Dashboard Routes */}
-        <Route path="/dashboard" element={<DashboardLayout />}>
+        {/* Protected Dashboard Routes */}
+        <Route
+          path="/dashboard"
+          element={
+            <PrivateRoute>
+              <DashboardLayout />
+            </PrivateRoute>
+          }
+        >
           <Route path="home" element={<Home />} />
           <Route path="team" element={<Team />} />
           <Route path="addpatients" element={<Patients />} />

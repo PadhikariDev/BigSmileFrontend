@@ -5,9 +5,8 @@ import {
     faTooth,
     faTeeth,
     faRectangleList,
-    faMagnifyingGlass,
-    faUser,
     faNotesMedical,
+    faUser,
 } from "@fortawesome/free-solid-svg-icons";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
@@ -21,7 +20,7 @@ import PatientsView from "./PatientsView";
 const AddPatients = () => {
     const [patients, setPatients] = useState([]);
     const [searchName, setSearchName] = useState("");
-    const [filtered, setFiltered] = useState(patients);
+    const [filtered, setFiltered] = useState([]);
     const [open, setOpen] = useState(false);
     const [activeTab, setActiveTab] = useState("general");
     const [medicalReportFile, setMedicalReportFile] = useState(null);
@@ -29,6 +28,13 @@ const AddPatients = () => {
         selectedConditions: [],
         toothConditions: {},
     });
+    const [toast, setToast] = useState(false);
+
+    const API = import.meta.env.VITE_BACKEND_URL;
+    const API_URL = `${API}/api/patients`;
+
+    const token = localStorage.getItem("token"); // <-- use token for authenticated calls
+
     const initialFormData = {
         general: {
             opdNumber: "",
@@ -74,21 +80,22 @@ const AddPatients = () => {
         },
     };
     const [formData, setFormData] = useState(initialFormData);
-    const [toast, setToast] = useState(false);
 
     // --- Helpers ---
     const capitalizeWords = (str) =>
         str
             .split(" ")
-            .map(
-                (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()
-            )
+            .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
             .join(" ");
 
     const handleSearch = () => {
         if (!searchName.trim()) return setFiltered(patients);
         const formatted = capitalizeWords(searchName.trim());
-        setFiltered(patients.filter((p) => p.name === formatted));
+        setFiltered(
+            patients.filter((p) =>
+                p.name.toLowerCase() === formatted.toLowerCase()
+            )
+        );
         setSearchName("");
     };
 
@@ -105,10 +112,10 @@ const AddPatients = () => {
     const handleFileChange = (e) => {
         if (e.target.files && e.target.files.length > 0) {
             const file = e.target.files[0];
-            setMedicalReportFile(file); // for sending via FormData
+            setMedicalReportFile(file);
             setFormData((prev) => ({
                 ...prev,
-                history: { ...prev.history, medicalReport: file.name }, // just store name for UI
+                history: { ...prev.history, medicalReport: file.name },
             }));
         }
     };
@@ -120,20 +127,24 @@ const AddPatients = () => {
         }));
     };
 
+    // --- Fetch Patients ---
     useEffect(() => {
         const fetchPatients = async () => {
             try {
-                const res = await fetch("http://localhost:5000/api/patients");
+                const res = await fetch(API_URL, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${token}`, // <-- include token
+                    },
+                });
                 const data = await res.json();
-                if (data.success) {
-                    setPatients(data.patients);
-                }
+                if (data.success) setPatients(data.patients);
             } catch (err) {
                 console.error("Failed to fetch patients", err);
             }
         };
         fetchPatients();
-    }, []);
+    }, [API_URL, token]);
 
     useEffect(() => {
         setFiltered(patients);
@@ -144,21 +155,20 @@ const AddPatients = () => {
         try {
             const formDataToSend = new FormData();
 
-            // Append all top-level fields
             for (const key in formData) {
                 formDataToSend.append(key, JSON.stringify(formData[key]));
             }
-
-            // Append prescription
             formDataToSend.append("prescription", JSON.stringify(prescription));
 
-            // Append file
             if (medicalReportFile) {
                 formDataToSend.append("medicalReport", medicalReportFile);
             }
 
-            const res = await fetch("http://localhost:5000/api/patients", {
+            const res = await fetch(API_URL, {
                 method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`, // <-- include token
+                },
                 body: formDataToSend,
             });
 
@@ -166,16 +176,12 @@ const AddPatients = () => {
 
             const data = await res.json();
 
-            // ✅ Update local state immediately
             setPatients((prev) => [...prev, data.patient]);
-
-            // Reset form and prescription
             setFormData(initialFormData);
             setPrescription({ selectedConditions: [], toothConditions: {} });
             setMedicalReportFile(null);
             setOpen(false);
 
-            // Show toast
             setToast(true);
             setTimeout(() => setToast(false), 5000);
         } catch (err) {
@@ -184,12 +190,10 @@ const AddPatients = () => {
         }
     };
 
-
     return (
         <div className="space-y-5">
             {/* Search + Add */}
             <div className="flex flex-wrap items-center justify-end rounded-lg p-4 gap-3">
-
                 <button
                     onClick={() => setOpen(true)}
                     className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-gradient-to-r from-[#d27f0a] to-[#ea940c] rounded-md hover:from-[#ea940c] hover:to-[#f5a623] text-[#fffbfa] cursor-pointer"
@@ -199,7 +203,7 @@ const AddPatients = () => {
             </div>
 
             {/* Patient List Table */}
-            <PatientsView patients={patients} setPatients={setPatients} />
+            <PatientsView patients={filtered} setPatients={setPatients} />
 
             {/* Modal */}
             {open && (
@@ -207,60 +211,26 @@ const AddPatients = () => {
                     <div className="bg-[#FFFCFB] w-5/6 max-w-6xl h-5/6 rounded-2xl shadow-2xl flex overflow-hidden">
                         {/* Sidebar */}
                         <aside className="w-1/4 bg-[#f8f9f0] text-black p-6 flex flex-col">
-                            <h2 className="text-xl font-semibold mb-6">
-                                Patient Menu
-                            </h2>
+                            <h2 className="text-xl font-semibold mb-6">Patient Menu</h2>
                             <nav className="space-y-4">
-                                <button
-                                    onClick={() => setActiveTab("general")}
-                                    className={`flex items-center gap-3 w-full text-left p-2 rounded-lg transition cursor-pointer ${activeTab === "general"
-                                        ? "bg-gradient-to-r from-[#d27f0a] to-[#ea940c] text-white"
-                                        : "hover:bg-orange-100"
-                                        }`}
-                                >
-                                    <FontAwesomeIcon icon={faUser} /> General
-                                    Info
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab("history")}
-                                    className={`flex items-center gap-3 w-full text-left p-2 rounded-lg transition cursor-pointer ${activeTab === "history"
-                                        ? "bg-gradient-to-r from-[#d27f0a] to-[#ea940c] text-white"
-                                        : "hover:bg-orange-100"
-                                        }`}
-                                >
-                                    <FontAwesomeIcon icon={faNotesMedical} />{" "}
-                                    Medical History
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab("prescription")}
-                                    className={`flex items-center gap-3 w-full text-left p-2 rounded-lg transition cursor-pointer ${activeTab === "prescription"
-                                        ? "bg-gradient-to-r from-[#d27f0a] to-[#ea940c] text-white"
-                                        : "hover:bg-orange-100"
-                                        }`}
-                                >
-                                    <FontAwesomeIcon icon={faTeeth} /> Gingival
-                                    Examination
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab("examine")}
-                                    className={`flex items-center gap-3 w-full text-left p-2 rounded-lg transition cursor-pointer ${activeTab === "examine"
-                                        ? "bg-gradient-to-r from-[#d27f0a] to-[#ea940c] text-white"
-                                        : "hover:bg-orange-100"
-                                        }`}
-                                >
-                                    <FontAwesomeIcon icon={faTooth} />
-                                    Teeth Examine
-                                </button>
-                                <button
-                                    onClick={() => setActiveTab("evaluation")}
-                                    className={`flex items-center gap-3 w-full text-left p-2 rounded-lg transition cursor-pointer ${activeTab === "evaluation"
-                                        ? "bg-gradient-to-r from-[#d27f0a] to-[#ea940c] text-white"
-                                        : "hover:bg-orange-100"
-                                        }`}
-                                >
-                                    <FontAwesomeIcon icon={faRectangleList} />{" "}
-                                    Evaluation
-                                </button>
+                                {[
+                                    { id: "general", icon: faUser, label: "General Info" },
+                                    { id: "history", icon: faNotesMedical, label: "Medical History" },
+                                    { id: "prescription", icon: faTeeth, label: "Gingival Examination" },
+                                    { id: "examine", icon: faTooth, label: "Teeth Examine" },
+                                    { id: "evaluation", icon: faRectangleList, label: "Evaluation" },
+                                ].map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={`flex items-center gap-3 w-full text-left p-2 rounded-lg transition cursor-pointer ${activeTab === tab.id
+                                                ? "bg-gradient-to-r from-[#d27f0a] to-[#ea940c] text-white"
+                                                : "hover:bg-orange-100"
+                                            }`}
+                                    >
+                                        <FontAwesomeIcon icon={tab.icon} /> {tab.label}
+                                    </button>
+                                ))}
                             </nav>
                             <div className="mt-auto pt-6 border-t border-gray-200 text-sm opacity-80">
                                 © 2025 BigSmile Dental

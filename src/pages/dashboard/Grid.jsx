@@ -9,12 +9,19 @@ export const Grid = () => {
     const [totalPatients, setTotalPatients] = useState(0);
     const [lastMonthPatients, setLastMonthPatients] = useState(0);
     const [totalStaff, setTotalStaff] = useState(0);
+    const API = import.meta.env.VITE_BACKEND_URL;
 
     // Fetch patients
     useEffect(() => {
         const fetchPatients = async () => {
             try {
-                const res = await fetch("http://localhost:5000/api/patients");
+                const token = localStorage.getItem("token");
+                const res = await fetch(`${API}/api/patients`, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`  // <-- include your token
+                    }
+                });
                 const data = await res.json();
 
                 if (data.success && Array.isArray(data.patients)) {
@@ -39,16 +46,19 @@ export const Grid = () => {
             }
         };
         fetchPatients();
-    }, []);
+    }, [API]);
 
     // Fetch doctors/staff
     useEffect(() => {
         const fetchDoctors = async () => {
             try {
-                const res = await fetch("http://localhost:5000/api/doctors");
+                const res = await fetch(`${API}/api/doctors`);
                 const data = await res.json();
 
-                if (Array.isArray(data)) {
+                if (data.success && Array.isArray(data.doctors)) {
+                    setTotalStaff(data.doctors.length);
+                } else if (Array.isArray(data)) {
+                    // fallback if API returns plain array
                     setTotalStaff(data.length);
                 }
             } catch (err) {
@@ -56,11 +66,11 @@ export const Grid = () => {
             }
         };
         fetchDoctors();
-    }, []);
+    }, [API]);
 
     return (
         <div
-            className="grid grid-rows-3 gap-6 "
+            className="grid grid-rows-3 gap-6"
             style={{ height: "calc(100vh - 92px)" }}
         >
             {/* Row 1 */}
@@ -82,9 +92,7 @@ export const Grid = () => {
                     <BarChart />
                 </div>
                 <div className="w-full h-full flex items-center justify-center col-span-1">
-
-                    <FullCalendar /> {/* your Nepali Calendar component */}
-
+                    <FullCalendar />
                 </div>
             </div>
         </div>

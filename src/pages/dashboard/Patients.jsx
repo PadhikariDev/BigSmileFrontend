@@ -1,7 +1,6 @@
 import React from 'react'
 
 import { Topbar } from './Topbar'
-import { Grid } from './Grid'
 import AddPatients from '../../components/patients/AddPatients'
 
 
