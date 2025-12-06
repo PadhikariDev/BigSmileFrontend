@@ -19,14 +19,12 @@ export const Grid = () => {
                 const res = await fetch(`${API}/api/patients`, {
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`  // <-- include your token
+                        "Authorization": `Bearer ${token}`
                     }
                 });
                 const data = await res.json();
-
                 if (data.success && Array.isArray(data.patients)) {
                     const patients = data.patients;
-
                     setTotalPatients(patients.length);
 
                     const now = new Date();
@@ -54,11 +52,9 @@ export const Grid = () => {
             try {
                 const res = await fetch(`${API}/api/doctors`);
                 const data = await res.json();
-
                 if (data.success && Array.isArray(data.doctors)) {
                     setTotalStaff(data.doctors.length);
                 } else if (Array.isArray(data)) {
-                    // fallback if API returns plain array
                     setTotalStaff(data.length);
                 }
             } catch (err) {
@@ -69,32 +65,36 @@ export const Grid = () => {
     }, [API]);
 
     return (
-        <div
-            className="grid grid-rows-3 gap-6"
-            style={{ height: "calc(100vh - 92px)" }}
-        >
-            {/* Row 1 */}
-            <div className="grid grid-cols-3 gap-4">
-                <div className="flex items-center justify-center h-full">
+        <div className="h-[calc(100vh-92px)] flex flex-col">
+            {/* Top row: 3 cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 h-[40%]">
+                <div className="h-full flex min-w-[200px]">
                     <TotalPatients totalPatients={totalPatients} lastMonthPatients={lastMonthPatients} />
                 </div>
-                <div className="flex items-center justify-center h-full">
+                <div className="h-full flex min-w-[200px]">
                     <AvailableStaff totalStaff={totalStaff} />
                 </div>
-                <div className="flex items-center justify-center h-full">
+                <div className="h-full flex min-w-[200px]">
                     <AgeDistribution />
                 </div>
             </div>
 
-            {/* Row 2 */}
-            <div className="grid grid-cols-3 gap-4 h-full">
-                <div className="flex items-center justify-center h-full col-span-2">
+
+
+            {/* Space between rows */}
+            <div className="my-4"></div> {/* optional vertical spacing */}
+
+            {/* Bottom row: 2 cards, same full width as top row */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 h-[55%] w-full">
+                <div className="col-span-1 lg:col-span-8 h-full flex min-w-[300px]">
                     <BarChart />
                 </div>
-                <div className="w-full h-full flex items-center justify-center col-span-1">
+                <div className="col-span-1 lg:col-span-4 h-full flex min-w-[200px]">
                     <FullCalendar />
                 </div>
             </div>
         </div>
+
+
     );
 };

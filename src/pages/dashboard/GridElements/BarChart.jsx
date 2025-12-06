@@ -11,7 +11,7 @@ import {
 
 const BarChart = () => {
     const [patients, setPatients] = useState([]);
-    const API = import.meta.env.VITE_BACKEND_URL; // use .env for backend URL
+    const API = import.meta.env.VITE_BACKEND_URL; // backend URL
 
     useEffect(() => {
         const fetchPatients = async () => {
@@ -20,14 +20,13 @@ const BarChart = () => {
                 const res = await fetch(`${API}/api/patients`, {
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": `Bearer ${token}`  // <-- include your token
-                    }
+                        "Authorization": `Bearer ${token}`,
+                    },
                 });
                 const data = await res.json();
 
                 if (data.success && Array.isArray(data.patients)) {
                     setPatients(data.patients);
-                    console.log("Fetched patients:", data.patients);
                 }
             } catch (err) {
                 console.error("Failed to fetch patients", err);
@@ -37,58 +36,20 @@ const BarChart = () => {
         fetchPatients();
     }, [API]);
 
-    // All 12 months
+    // English months
     const months = [
-        "बैशाख",
-        "जेठ",
-        "आषाढ",
-        "श्रावण",
-        "भाद्र",
-        "आश्विन",
-        "कार्तिक",
-        "मंसिर",
-        "पुष",
-        "माघ",
-        "फाल्गुण",
-        "चैत्र"
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
     ];
 
-    const nepaliMonthDays = [31, 31, 32, 31, 31, 31, 29, 29, 30, 29, 30, 30];
-
-    const convertADtoBS2082 = (adDate) => {
-        const startBS = { year: 2082, month: 0, day: 1 };
-        const startAD = new Date("2025-04-13");
-
-        let diffDays = Math.floor((adDate - startAD) / (1000 * 60 * 60 * 24));
-
-        let year = startBS.year;
-        let month = startBS.month;
-        let day = startBS.day;
-
-        while (diffDays > 0) {
-            day++;
-            diffDays--;
-
-            if (day > nepaliMonthDays[month]) {
-                day = 1;
-                month++;
-                if (month > 11) {
-                    month = 0;
-                    year++;
-                }
-            }
-        }
-
-        return { year, month, day };
-    };
-
+    // Count patients per month based on AD date
     const monthlyCounts = Array(12).fill(0);
     patients.forEach(p => {
         if (p.general?.date) {
-            const adDate = new Date(p.general.date);
-            if (!isNaN(adDate)) {
-                const bsDate = convertADtoBS2082(adDate);
-                monthlyCounts[bsDate.month]++;
+            const date = new Date(p.general.date);
+            if (!isNaN(date)) {
+                const month = date.getMonth();
+                monthlyCounts[month]++;
             }
         }
     });
@@ -99,20 +60,29 @@ const BarChart = () => {
     }));
 
     return (
-        <div className="w-full h-[280px] bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col cursor-pointer">
-            <h3 className="text-sm font-bold text-gray-500 uppercase mb-4">
+        <div className="w-full h-full bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-gray-200 p-4 flex flex-col cursor-pointer">
+            <h3 className="text-sm font-bold text-gray-700 uppercase mb-3">
                 Patients by Month
             </h3>
-            <div className="flex-1 min-h-[210px]">
+            <div className="flex-1 min-h-[0]">
                 <ResponsiveContainer width="100%" height="100%">
-                    <ReBarChart data={chartData} margin={{ top: 10, right: 20, bottom: 0, left: 0 }}>
-                        <XAxis dataKey="month" />
-                        <YAxis allowDecimals={false} />
+                    <ReBarChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                        <XAxis
+                            dataKey="month"
+                            tick={{ fill: "#6b7280", fontSize: 12 }}
+                            axisLine={{ stroke: "#d1d5db" }}
+                        />
+                        <YAxis
+                            allowDecimals={false}
+                            tick={{ fill: "#6b7280", fontSize: 12 }}
+                            axisLine={{ stroke: "#d1d5db" }}
+                        />
                         <Tooltip
                             content={({ active, payload, label }) => {
                                 if (active && payload && payload.length) {
                                     return (
-                                        <div className="p-3 rounded-lg shadow-lg border border-gray-200">
+                                        <div className="p-2 rounded-lg shadow-md border border-gray-200 bg-white/90 backdrop-blur-sm">
                                             <p className="text-sm font-semibold text-gray-800">{label}</p>
                                             <p className="text-sm text-gray-600">{`Patients: ${payload[0].value}`}</p>
                                         </div>

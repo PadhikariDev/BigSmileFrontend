@@ -1,55 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
-// Nepali months
-const nepaliMonths = [
-    "बैशाख", "जेठ", "आषाढ", "श्रावण", "भाद्र", "आश्विन",
-    "कार्तिक", "मंसिर", "पुष", "माघ", "फाल्गुण", "चैत्र"
+const months = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
 ];
 
-// Nepali month lengths for 2082 BS
-const nepaliMonthDays2082 = [31, 31, 32, 31, 31, 31, 29, 29, 30, 29, 30, 30];
-// Days of the week
-const weekDays = ["आइत", "सोम", "मङ्गल", "बुध", "बिहि", "शुक्र", "शनि"];
-
-// Simple approximate AD to BS converter for 2082 BS
-const convertADtoBS2082 = (adDate) => {
-    const startBS = { year: 2082, month: 0, day: 1 }; // 1 बैशाख 2082 BS
-    const startAD = new Date("2025-04-13"); // 1 बैशाख 2082 BS ~ 13 April 2025 AD
-
-    // Calculate total days difference
-    let diffDays = Math.floor((adDate - startAD) / (1000 * 60 * 60 * 24));
-
-    let year = startBS.year;
-    let month = startBS.month;
-    let day = startBS.day;
-
-    while (diffDays > 0) {
-        day++;
-        diffDays--;
-
-        if (day > nepaliMonthDays2082[month]) {
-            day = 1;
-            month++;
-            if (month > 11) {
-                month = 0;
-                year++;
-            }
-        }
-    }
-
-    return { year, month, day };
-};
+const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 const FullCalendar = () => {
-    const todayAD = new Date();
-    const todayBS = convertADtoBS2082(todayAD);
+    const today = new Date();
+    const [currentMonth, setCurrentMonth] = useState(today.getMonth());
+    const [currentYear, setCurrentYear] = useState(today.getFullYear());
 
-    const [currentMonth, setCurrentMonth] = useState(todayBS.month);
-    const [currentYear, setCurrentYear] = useState(todayBS.year);
-    const [selectedDate, setSelectedDate] = useState(todayBS);
-
-    // Days in current month
-    const daysInMonth = nepaliMonthDays2082[currentMonth];
+    // Total days in current month
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    // Weekday of 1st day of the month (0=Sun, 1=Mon, …)
+    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
 
     const handlePrevMonth = () => {
         let newMonth = currentMonth - 1;
@@ -73,66 +39,64 @@ const FullCalendar = () => {
         setCurrentYear(newYear);
     };
 
-    const handleSelectDate = (day) => {
-        setSelectedDate({ year: currentYear, month: currentMonth, day });
-    };
+    // Generate calendar days with empty slots for first day alignment
+    const calendarDays = [
+        ...Array(firstDay).fill(null),
+        ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+    ];
 
     return (
-        <div className="p-2 w-full max-w-sm bg-white rounded-lg shadow-md">
+        <div className="p-3 w-full max-w-sm bg-white/80 backdrop-blur-md rounded-2xl shadow-lg border border-black/20 flex flex-col">
             {/* Header */}
             <div className="flex justify-between items-center mb-2">
                 <button
-                    className="px-2 py-1 rounded bg-gray-200 hover:bg-gray-300"
+                    className="px-3 py-1 rounded bg-black/10 hover:bg-black/20 text-black"
                     onClick={handlePrevMonth}
                 >
-                    {"<"}
+                    &lt;
                 </button>
-                <div className="font-bold text-center">
-                    {nepaliMonths[currentMonth]} {currentYear}
+                <div className="font-bold text-center text-black">
+                    {months[currentMonth]} {currentYear}
                 </div>
                 <button
-                    className="px-2 py-1 rounded bg-gray-200 hover:bg-gray-300"
+                    className="px-3 py-1 rounded bg-black/10 hover:bg-black/20 text-black"
                     onClick={handleNextMonth}
                 >
-                    {">"}
+                    &gt;
                 </button>
             </div>
 
             {/* Weekdays */}
-            <div className="grid grid-cols-7 gap-1 text-xs font-medium text-center text-gray-700">
-                {weekDays.map((d) => (
-                    <div key={d} className="text-red-500">
-                        {d}
-                    </div>
+            <div className="grid grid-cols-7 gap-1 text-xs font-semibold text-center text-black/80 mb-1">
+                {weekDays.map((day) => (
+                    <div key={day}>{day}</div>
                 ))}
             </div>
 
             {/* Days */}
-            <div className="grid grid-cols-7 gap-1 mt-1">
-                {Array.from({ length: daysInMonth }, (_, i) => i + 1).map((d) => {
+            <div className="grid grid-cols-7 gap-1 flex-1">
+                {calendarDays.map((day, index) => {
+                    if (day === null) return <div key={index} />; // empty slot
+
                     const isToday =
-                        d === todayBS.day &&
-                        currentMonth === todayBS.month &&
-                        currentYear === todayBS.year;
-                    const isSelected =
-                        d === selectedDate.day &&
-                        currentMonth === selectedDate.month &&
-                        currentYear === selectedDate.year;
+                        day === today.getDate() &&
+                        currentMonth === today.getMonth() &&
+                        currentYear === today.getFullYear();
 
                     return (
                         <button
-                            key={d}
-                            onClick={() => handleSelectDate(d)}
-                            className={`p-2 rounded text-sm hover:bg-blue-200 ${isToday ? "bg-red-500 text-white" : ""
-                                } `}
+                            key={index}
+                            disabled
+                            className={`p-1 flex items-center justify-center text-sm rounded-full
+                                ${isToday ? "bg-red-500 text-white w-7 h-7 text-xs" : ""}
+                                ${!isToday ? "text-black/90" : ""}
+                            `}
                         >
-                            {d}
+                            {day}
                         </button>
                     );
                 })}
             </div>
-
-
         </div>
     );
 };
