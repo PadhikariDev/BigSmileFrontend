@@ -2,6 +2,7 @@ import { React, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import bigS from '../assets/big_smile.jpg'
 import logo from '../assets/bsLogo.png'
+import smile from "../assets/happy.gif"
 import loginImg from '../assets/loginPage.jpg'
 import Popup from '../components/Popup'
 import axios from "axios";
@@ -37,7 +38,7 @@ const Login = () => {
             console.error("Login error:", error.response?.data || error);
             setShowPopup(true);
         } finally {
-            setIsLoading(false); // stop loading
+            setIsLoading(false);
         }
 
         setUsername("");
@@ -46,70 +47,111 @@ const Login = () => {
 
     return (
         <div
-            className="h-screen w-screen flex justify-center items-center font-sans relative"
+            className="min-h-screen w-full flex justify-center items-center font-sans relative"
             style={{
                 backgroundImage: `url(${bigS})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
+                backgroundSize: "cover",
+                backgroundPosition: "center",
             }}
         >
             <div className="absolute inset-0 bg-black/50"></div>
 
-            <div className=" relative z-10 w-3/4 h-3/4 flex justify-center items-center rounded-lg shadow-2xl bg-[#EEEEEE]">
-                <div className="w-1/2 h-full flex justify-center items-center rounded-lg">
+            {/* Main Card */}
+            <div className="
+    relative z-10 w-[90%] max-w-5xl h-auto lg:h-[75vh]
+    flex flex-col lg:flex-row 
+    rounded-2xl shadow-2xl overflow-hidden bg-[#EEEEEE]
+">
+
+                {/* LEFT IMAGE — HIDDEN ON SMALL SCREENS */}
+                <div className="hidden lg:block lg:w-[50%] h-full">
                     <img
                         src={loginImg}
                         alt="Big Smile Dental Clinic"
-                        className="w-full h-full object-cover rounded-tl-lg rounded-bl-lg"
+                        className="w-full h-full object-cover"
                     />
                 </div>
-                <div className="w-1/2 h-full rounded-lg flex flex-col justify-center items-center p-8">
+
+                {/* RIGHT SIDE */}
+                <div className="w-full lg:w-[50%] flex flex-col justify-center items-center p-8 lg:p-10">
+
                     <img src={logo} alt="Logo" className="w-20 h-20 mb-4" />
-                    <h1 className="text-center font-bold tracking-tight text-[#070a09] 
-               text-[36px] md:text-[48px] lg:text-[56px] 
-               leading-tight mb-4 whitespace-nowrap">
+
+                    <h1 className="text-center font-bold tracking-tight text-[#070a09]
+            text-3xl md:text-4xl lg:text-5xl leading-tight mb-4">
                         Big{" "}
                         <span className="text-transparent font-extrabold [-webkit-text-stroke:2px_#ff860d]">
                             Smile
                         </span>{" "}
                         Dental
                     </h1>
-                    <p className="text-center  font-base italic text-[#070a09] text-[18px] md:text-[20px] lg:text-[22px] leading-snug max-w-2xl mx-auto mb-8">
-                        A healthy smile is a happy smile.
-                    </p>
-                    <form onSubmit={handleSubmit} className="w-3/4 flex flex-col gap-5">
+
+                    <div className="flex items-center justify-center mb-8">
+                        <p className="text-center italic text-[#070a09] text-lg md:text-xl leading-snug max-w-md">
+                            Make your smile big.
+                        </p>
+                        <img
+                            src={smile}
+                            alt="Smile"
+                            className="w-8 h-8 ml-2 mix-blend-multiply"
+                        />
+                    </div>
+
+                    {/* FORM */}
+                    <form onSubmit={handleSubmit} className="w-full max-w-sm flex flex-col gap-5">
+
+                        {/* FIXED INPUTS WITH ID + NAME */}
                         <input
+                            id="username"
+                            name="username"
                             type="text"
                             placeholder="Username"
                             value={username}
                             onChange={(e) => setUsername(e.target.value)}
-                            className="px-4 py-2 text-base rounded-md text-gray-800 outline-none border border-gray-300 focus:ring-2 focus:ring-[#e0a031]"
+                            className="px-4 py-3 text-base rounded-md text-gray-800 border border-gray-300
+                           focus:ring-2 focus:ring-[#e0a031] outline-none"
+                            autoComplete="username"
                         />
+
                         <input
+                            id="password"
+                            name="password"
                             type="password"
                             placeholder="Password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="px-4 py-2 text-base rounded-md text-gray-800 outline-none border border-gray-300 focus:ring-2 focus:ring-[#e0a031]"
+                            className="px-4 py-3 text-base rounded-md text-gray-800 border border-gray-300
+                           focus:ring-2 focus:ring-[#e0a031] outline-none"
+                            autoComplete="current-password"
                         />
+
+                        {/* ORIGINAL GRADIENT BUTTON + PRO HEIGHT + CENTERED */}
                         <button
                             type="submit"
-                            disabled={isLoading} // disable while loading
-                            className="w-1/2 mx-auto py-3 px-10 text-lg font-medium text-[#fff8f0]
-             rounded-lg shadow-md 
-            bg-gradient-to-r from-[#FF8008] via-[#FFC837] to-[#FF8008] 
-             bg-[length:200%_auto] bg-left transition-all duration-500 ease-in-out hover:bg-right cursor-pointer flex items-center justify-center gap-2"
+                            disabled={isLoading}
+                            className="
+                    mx-auto px-10 py-2.5 
+                    text-lg font-medium text-[#fff8f0]
+                    rounded-lg shadow-md cursor-pointer
+                    bg-gradient-to-r from-[#FF8008] via-[#FFC837] to-[#FF8008]
+                    bg-[length:200%_auto] bg-left
+                    hover:bg-right transition-all duration-500 ease-in-out
+                    hover:scale-[1.02] 
+                    disabled:opacity-50 flex items-center justify-center gap-2
+                "
                         >
                             {isLoading ? <BeatLoader size={10} color="#fff" /> : "Login"}
                         </button>
                     </form>
                 </div>
             </div>
+
             {showPopup && (
                 <Popup message="Incorrect username or password." onClose={() => setShowPopup(false)} />
             )}
         </div>
-    )
+    );
+
 }
 
 export default Login
