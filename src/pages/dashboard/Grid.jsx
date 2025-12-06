@@ -50,19 +50,28 @@ export const Grid = () => {
     useEffect(() => {
         const fetchDoctors = async () => {
             try {
-                const res = await fetch(`${API}/api/doctors`);
+                const token = localStorage.getItem("token");
+                const res = await fetch(`${API}/api/doctors`, {
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${token}`
+                    }
+                });
+
                 const data = await res.json();
-                if (data.success && Array.isArray(data.doctors)) {
-                    setTotalStaff(data.doctors.length);
-                } else if (Array.isArray(data)) {
-                    setTotalStaff(data.length);
-                }
+
+                // If API returns array directly
+                const doctorsArray = Array.isArray(data) ? data : data.doctors || [];
+                setTotalStaff(doctorsArray.length);
+
             } catch (err) {
                 console.error("Failed to fetch doctors", err);
+                setTotalStaff(0);
             }
         };
         fetchDoctors();
     }, [API]);
+
 
     return (
         <div className="h-[calc(100vh-92px)] flex flex-col">
