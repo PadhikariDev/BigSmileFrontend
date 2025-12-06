@@ -26,7 +26,6 @@ const AgeDistribution = () => {
         fetchPatients();
     }, [API]);
 
-    // Categorize by age groups
     const children = patients.filter((p) => p.general.age < 13).length;
     const young = patients.filter((p) => p.general.age >= 13 && p.general.age <= 25).length;
     const adults = patients.filter((p) => p.general.age >= 26 && p.general.age <= 60).length;
@@ -57,9 +56,6 @@ const AgeDistribution = () => {
                             outerRadius="60%"
                             paddingAngle={2}
                             dataKey="value"
-                            label={({ name, percent }) =>
-                                `${name}: ${(percent * 100).toFixed(0)}%`
-                            }
                         >
                             {data.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
